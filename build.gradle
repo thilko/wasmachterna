@@ -1,0 +1,27 @@
+plugins {
+    id "org.springframework.boot" version "2.0.1.RELEASE"
+}
+
+apply plugin: 'java'
+
+
+springBoot {
+    mainClassName = 'com.adhoc.erna.App'
+}
+
+repositories {
+    jcenter()
+    maven { url "https://repo.spring.io/snapshot" }
+    maven { url "https://repo.spring.io/milestone" }
+}
+
+dependencies {
+    compile("org.springframework.boot:spring-boot-starter-web:2.0.3.RELEASE")
+    compile("org.springframework.boot:spring-boot-starter-integration:2.0.3.RELEASE")
+    compile("org.springframework.boot:spring-boot-starter-integration:2.0.3.RELEASE")
+    compile 'org.springframework.integration:spring-integration-mqtt:5.0.6.RELEASE'
+
+    compile group: 'org.eclipse.paho', name: 'org.eclipse.paho.client.mqttv3', version: '1.2.0'
+
+    testCompile("org.springframework.boot:spring-boot-starter-test:2.0.3.RELEASE")
+}
