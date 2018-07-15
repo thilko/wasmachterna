@@ -1,5 +1,9 @@
 package com.adhoc.erna;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -9,10 +13,8 @@ import org.springframework.integration.mqtt.core.DefaultMqttPahoClientFactory;
 import org.springframework.integration.mqtt.core.MqttPahoClientFactory;
 import org.springframework.integration.mqtt.inbound.MqttPahoMessageDrivenChannelAdapter;
 import org.springframework.integration.mqtt.support.DefaultPahoMessageConverter;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
-import org.springframework.messaging.MessagingException;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -27,19 +29,26 @@ import java.security.cert.X509Certificate;
 @Configuration
 public class MessagingConfig {
 
+    @Value("${mqttHost}")
+    private String mqttHost;
+
+    @Value("${erna_user}")
+    private String user;
+
+    @Value("${erna_password}")
+    private String password;
+
     @Bean
     public MessageChannel mqttInputChannel() {
-        DirectChannel directChannel = new DirectChannel();
-
-        return directChannel;
+        return new DirectChannel();
     }
 
     @Bean
-    public MessageProducer inbound() throws CertificateException, NoSuchAlgorithmException, KeyStoreException, IOException, KeyManagementException {
+    public MessageProducer inbound() throws NoSuchAlgorithmException, KeyManagementException {
         MqttPahoMessageDrivenChannelAdapter adapter =
-                new MqttPahoMessageDrivenChannelAdapter("", "",
+                new MqttPahoMessageDrivenChannelAdapter(mqttHost, "erna",
                         mqttClientFactory(),
-                        "", "");
+                        "/device/260113b4/event");
 
         adapter.setCompletionTimeout(5000);
         adapter.setConverter(new DefaultPahoMessageConverter());
@@ -50,7 +59,7 @@ public class MessagingConfig {
     }
 
     @Bean
-    public MqttPahoClientFactory mqttClientFactory() throws NoSuchAlgorithmException, CertificateException, KeyManagementException, KeyStoreException, IOException {
+    public MqttPahoClientFactory mqttClientFactory() throws NoSuchAlgorithmException, KeyManagementException {
         TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {
                     public java.security.cert.X509Certificate[] getAcceptedIssuers() {
@@ -70,27 +79,22 @@ public class MessagingConfig {
         SSLContext sc = SSLContext.getInstance("SSL");
         sc.init(null, trustAllCerts, new java.security.SecureRandom());
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
-        factory.setServerURIs("ssl://mqtt.ad-hoc.com");
 
-        factory.setUserName("");
-        factory.setPassword("");
-        factory.setSocketFactory(sc.getSocketFactory());
+        MqttConnectOptions options = new MqttConnectOptions();
+        options.setServerURIs(new String[]{mqttHost});
+        options.setUserName(user);
+        options.setPassword(password.toCharArray());
+        options.setSocketFactory(sc.getSocketFactory());
+        factory.setConnectionOptions(options);
+
         return factory;
     }
 
-
     @Bean
     @ServiceActivator(inputChannel = "mqttInputChannel")
-    public MessageHandler handler() {
-        MessageHandler messageHandler = new MessageHandler() {
-
-            @Override
-            public void handleMessage(Message<?> message) throws MessagingException {
-                System.out.println(message.getPayload());
-            }
-
-        };
-
-        return messageHandler;
+    public MessageHandler handler(ObjectMapper objectMapper, ApplicationEventPublisher publisher) {
+        return new SensorMessageHandler(objectMapper, publisher);
     }
+
 }
+
