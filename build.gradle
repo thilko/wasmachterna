@@ -1,5 +1,2 @@
-project(':backend') {
-    dependencies {
-        project(':frontend')
-    }
-}
+
+task stage(dependsOn: ['build', 'clean'])
