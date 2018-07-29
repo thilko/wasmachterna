@@ -1,0 +1,37 @@
+plugins {
+    id "org.springframework.boot" version "2.0.1.RELEASE"
+}
+
+apply plugin: 'java'
+
+springBoot {
+    mainClassName = 'com.adhoc.erna.App'
+}
+
+repositories {
+    jcenter()
+    maven { url 'https://repo.spring.io/milestone' }
+}
+
+bootJar {
+    from('../frontend/build') {
+        into 'static'
+    }
+}
+
+bootJar.dependsOn(':frontend:assemble')
+
+dependencies {
+    compile 'org.springframework.boot:spring-boot-starter-integration:2.0.3.RELEASE'
+    compile 'org.springframework.boot:spring-boot-starter-web:2.0.3.RELEASE'
+    compile 'org.springframework.boot:spring-boot-starter-data-jpa:2.0.3.RELEASE'
+    compile 'org.springframework.integration:spring-integration-mqtt:5.0.6.RELEASE'
+    compile 'org.springframework.boot:spring-boot-devtools:2.0.3.RELEASE'
+
+    compile 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.0'
+    compile 'org.postgresql:postgresql:9.4-1206-jdbc42'
+
+    compileOnly 'org.projectlombok:lombok:1.18.0'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test:2.0.3.RELEASE'
+}
