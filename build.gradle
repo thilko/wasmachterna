@@ -1,2 +1,2 @@
 
-task stage(dependsOn: ['build', 'clean'])
+task stage(dependsOn: ['frontend:build', 'backend:build'])
